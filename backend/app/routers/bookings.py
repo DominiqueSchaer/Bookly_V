@@ -10,8 +10,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app import models, schemas
-from app.database import get_db
+from .. import models, schemas
+from ..database import get_db
 
 router = APIRouter(prefix="/api", tags=["bookings"])
 
@@ -77,6 +77,18 @@ def _booking_summary(booking: models.Booking) -> schemas.CalendarBookingSummary:
         id=booking.id,
         customerName=booking.customer.full_name,
         status=booking.status,
+        windowLabel=_format_window_label(booking),
+        requestedBy=booking.requested_by,
+        notes=booking.notes,
+    )
+
+
+def _pending_request_summary(booking: models.Booking) -> schemas.PendingRequestSummary:
+    return schemas.PendingRequestSummary(
+        id=booking.id,
+        customerName=booking.customer.full_name,
+        date=booking.start_at.isoformat(),
+        dateLabel=booking.start_at.strftime("%a, %d %b"),
         windowLabel=_format_window_label(booking),
         requestedBy=booking.requested_by,
         notes=booking.notes,
@@ -230,15 +242,7 @@ def _build_calendar(
     selected_detail = _build_day_detail(selected, bookings_by_day.get(selected, []))
 
     pending_requests = [
-        schemas.PendingRequestSummary(
-            id=booking.id,
-            customerName=booking.customer.full_name,
-            date=booking.start_at.isoformat(),
-            dateLabel=booking.start_at.strftime("%a, %d %b"),
-            windowLabel=_format_window_label(booking),
-            requestedBy=booking.requested_by,
-            notes=booking.notes,
-        )
+        _pending_request_summary(booking)
         for booking in sorted(
             (b for b in bookings if b.status == models.BookingStatus.pending),
             key=lambda b: (b.start_at, b.id),
@@ -394,6 +398,17 @@ async def decline_booking(
     return _booking_read(booking)
 
 
+@router.delete("/bookings/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_booking(
+    *,
+    booking_id: int,
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    booking = await _get_booking(db, booking_id)
+    await db.delete(booking)
+    await db.commit()
+
+
 @router.get("/calendar", response_model=schemas.CalendarResponse)
 async def get_calendar(
     *,
@@ -427,3 +442,21 @@ async def get_calendar_day(
     )
     day_bookings = [booking for booking in bookings if booking.start_at <= date_value <= booking.end_at]
     return _build_day_detail(date_value, day_bookings)
+
+
+@router.get("/bookings/pending", response_model=list[schemas.PendingRequestSummary])
+async def list_pending_bookings(
+    *,
+    db: AsyncSession = Depends(get_db),
+    resource_id: str = Query(DEFAULT_RESOURCE_ID, alias="resourceId"),
+) -> list[schemas.PendingRequestSummary]:
+    stmt = (
+        select(models.Booking)
+        .options(joinedload(models.Booking.customer))
+        .where(models.Booking.resource_id == resource_id)
+        .where(models.Booking.status == models.BookingStatus.pending)
+        .order_by(models.Booking.start_at.asc(), models.Booking.id.asc())
+    )
+    result = await db.execute(stmt)
+    bookings = result.scalars().all()
+    return [_pending_request_summary(booking) for booking in bookings]

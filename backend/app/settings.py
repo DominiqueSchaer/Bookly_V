@@ -4,17 +4,12 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
-NEON_DATABASE_URL = (
-    "postgresql+asyncpg://neondb_owner:"
-    "npg_WDZ0d4mhUBPt"
-    "@ep-polished-mouse-agnqozc5-pooler.c-2.eu-central-1.aws.neon.tech/neondb"
-    "?ssl=require"
-)
-
-
 class Settings(BaseSettings):
     app_name: str = Field(default="Bookly API", alias="APP_NAME")
-    database_url: str = Field(default=NEON_DATABASE_URL, alias="DATABASE_URL")
+    database_url: str = Field(
+        default="postgresql+asyncpg://postgres:postgres@localhost:5432/bookly",
+        alias="DATABASE_URL",
+    )
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
