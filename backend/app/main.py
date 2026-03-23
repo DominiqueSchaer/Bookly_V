@@ -1,5 +1,6 @@
 ﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from .routers import bookings, health
 from .settings import settings
@@ -18,6 +19,6 @@ app.include_router(health.router, prefix="/health", tags=["health"])
 app.include_router(bookings.router)
 
 
-@app.get("/")
-async def read_root() -> dict[str, str]:
-    return {"app": settings.app_name, "status": "ok"}
+@app.get("/", include_in_schema=False)
+async def read_root() -> RedirectResponse:
+    return RedirectResponse(url="/index.html", status_code=307)
