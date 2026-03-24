@@ -2,7 +2,7 @@
 
 Bookly couples a FastAPI backend with a lightweight, standalone HTMX + Tailwind frontend for managing reservations on a shared resource. The frontend ships as a single HTML file that can be opened directly in the browser after compiling Tailwind.
 
-This repo is also wired for a Vercel deployment with a root FastAPI serverless entrypoint and a build step that exports the frontend into `public/`.
+This repo is also wired for a Vercel deployment with a FastAPI serverless entrypoint and a build step that exports the frontend into `public/`.
 
 ## Project Layout
 
@@ -70,4 +70,4 @@ Before opening a PR run:
 2. Set `DATABASE_URL` in the Vercel environment settings.
 3. Deploy. Vercel will detect `app.py` as the FastAPI serverless entrypoint and run `python scripts/build_vercel.py` from `vercel.json`.
 
-The Vercel build copies `frontend-htmx/index.html` and `frontend-htmx/static/` into `public/`, and rewrites the frontend API base to `/api` for same-origin production requests.
+The Vercel build copies `frontend-htmx/index.html` and `frontend-htmx/static/` into `public/`, rewrites the frontend API base to `/api` for same-origin production requests, and bundles the generated `public/**` files with the Python function so `/`, `/index.html`, and `/static/*` still work when Vercel routes them through FastAPI.
