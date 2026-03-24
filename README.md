@@ -2,12 +2,13 @@
 
 Bookly couples a FastAPI backend with a lightweight, standalone HTMX + Tailwind frontend for managing reservations on a shared resource. The frontend ships as a single HTML file that can be opened directly in the browser after compiling Tailwind.
 
-This repo is wired for a simple split deployment: FastAPI runs on Vercel from the root `app.py` entrypoint, while static assets are served from `public/`.
+This repo is wired for a simple split deployment: FastAPI runs on Vercel from `api/index.py`, while static assets are served from `public/`.
 
 ## Project Layout
 
 ```
-app.py                 # Vercel and local FastAPI entrypoint
+api/
+  index.py             # Vercel and local FastAPI entrypoint
 backend/
   app/
     main.py
@@ -41,7 +42,7 @@ public/
    ```
 4. Run the API:
    ```bash
-   uvicorn app:app --reload --port 8000
+   uvicorn api.index:app --reload --port 8000
    ```
 
 ## Frontend (HTMX + Tailwind)
@@ -53,7 +54,7 @@ public/
    npm run build:css # or npm run dev:css for watch mode
    ```
 2. Open `frontend-htmx/index.html` in your browser. The page will:
-   - Use same-origin API routes by default when deployed on Vercel.
+   - Use `/api` as the backend base by default when deployed on Vercel.
    - Allow overriding the backend with `?apiBase=http://127.0.0.1:8000` or `localStorage.setItem('bookly.apiBase', 'http://127.0.0.1:8000')` for local debugging.
    - Fetch live data from the FastAPI API if available.
    - Fall back to inlined mock data so you can explore the UI without the backend running.
@@ -73,6 +74,6 @@ Before opening a PR run:
 
 1. Create a Vercel project pointed at this repository.
 2. Set `DATABASE_URL` in the Vercel environment settings.
-3. Deploy. Vercel can detect the root `app.py` entrypoint without additional routing configuration.
+3. Deploy. Vercel serves the static frontend from `public/` and the FastAPI function from `api/index.py`.
 
-The deployed API and frontend share the same origin at `https://<your-project>.vercel.app`, so the frontend can call `/health`, `/bookings`, and the other FastAPI routes directly.
+The deployed frontend lives at `https://<your-project>.vercel.app/` and the API lives under `https://<your-project>.vercel.app/api/...`.
