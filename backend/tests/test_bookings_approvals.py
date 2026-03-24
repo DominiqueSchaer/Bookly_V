@@ -19,20 +19,20 @@ def test_pending_approval_flow(client: TestClient) -> None:
         "resourceId": "alder-lake-house",
     }
 
-    create_response = client.post("/api/bookings", json=create_payload)
+    create_response = client.post("/bookings", json=create_payload)
     assert create_response.status_code in (200, 201), create_response.text
     booking_id = create_response.json()["id"]
 
-    pending_response = client.get("/api/bookings/pending", params={"resourceId": "alder-lake-house"})
+    pending_response = client.get("/bookings/pending", params={"resourceId": "alder-lake-house"})
     assert pending_response.status_code == 200, pending_response.text
     pending_ids = [item["id"] for item in pending_response.json()]
     assert booking_id in pending_ids
 
     decision_payload = {"actor": "Approver Bot", "note": "Approved via automated test"}
-    approve_response = client.post(f"/api/bookings/{booking_id}/approve", json=decision_payload)
+    approve_response = client.post(f"/bookings/{booking_id}/approve", json=decision_payload)
     assert approve_response.status_code == 200, approve_response.text
 
-    after_response = client.get("/api/bookings/pending", params={"resourceId": "alder-lake-house"})
+    after_response = client.get("/bookings/pending", params={"resourceId": "alder-lake-house"})
     assert after_response.status_code == 200, after_response.text
     remaining_ids = [item["id"] for item in after_response.json()]
     assert booking_id not in remaining_ids

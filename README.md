@@ -2,12 +2,13 @@
 
 Bookly couples a FastAPI backend with a lightweight, standalone HTMX + Tailwind frontend for managing reservations on a shared resource. The frontend ships as a single HTML file that can be opened directly in the browser after compiling Tailwind.
 
-This repo is also wired for a Vercel deployment with a FastAPI serverless entrypoint and a build step that exports the frontend into `public/`.
+This repo is wired for a simple split deployment: FastAPI runs on Vercel as serverless functions, while the HTMX frontend stays a standalone static site.
 
 ## Project Layout
 
 ```
-app.py                  # Vercel FastAPI entrypoint
+api/
+  index.py             # Vercel FastAPI entrypoint
 backend/
   app/
     main.py
@@ -21,7 +22,7 @@ frontend-htmx/
     styles.css         # Tailwind entrypoint
     output.css         # compiled stylesheet (generated)
 scripts/
-  build_vercel.py      # copies frontend assets into public/ for deploy
+  ...                  # optional local helpers
 ```
 
 ## Backend (FastAPI)
@@ -49,7 +50,8 @@ scripts/
    npm run build:css # or npm run dev:css for watch mode
    ```
 2. Open `frontend-htmx/index.html` in your browser. The page will:
-   - Read the backend base URL from `<meta name="api-base">` (defaults to `http://localhost:8000/api`).
+   - Read the backend base URL from `<meta name="api-base">` (defaults to `https://bookly-v.vercel.app/api`).
+   - Allow overriding the backend with `?apiBase=http://localhost:8000` or `localStorage.setItem('bookly.apiBase', 'http://localhost:8000')`.
    - Fetch live data from the FastAPI API if available.
    - Fall back to inlined mock data so you can explore the UI without the backend running.
 3. Update `static/styles.css` and re-run `npm run build:css` whenever you change styles.
@@ -68,6 +70,6 @@ Before opening a PR run:
 
 1. Create a Vercel project pointed at this repository.
 2. Set `DATABASE_URL` in the Vercel environment settings.
-3. Deploy. Vercel will detect `app.py` as the FastAPI serverless entrypoint and run `python scripts/build_vercel.py` from `vercel.json`.
+3. Deploy. Vercel will detect `api/index.py` as the Python serverless entrypoint.
 
-The Vercel build copies `frontend-htmx/index.html` and `frontend-htmx/static/` into `public/`, rewrites the frontend API base to `/api` for same-origin production requests, and bundles the generated `public/**` files with the Python function so `/`, `/index.html`, and `/static/*` still work when Vercel routes them through FastAPI.
+The deployed API base will be `https://<your-project>.vercel.app/api`. Because the frontend is now fully static, it can live on GitHub Pages, any static host, or be opened locally while talking to the Vercel backend.

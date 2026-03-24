@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="api-base" content="http://localhost:8000/api" />
+    <meta name="api-base" content="https://bookly-v.vercel.app/api" />
     <title>Shared Resource Calendar</title>
     <link rel="stylesheet" href="static/output.css" />
     <script src="https://unpkg.com/htmx.org@1.9.10" crossorigin="anonymous"></script>
@@ -268,7 +268,9 @@
       function clone(v) { return v == null ? v : JSON.parse(JSON.stringify(v)); }
 
       const apiBaseMeta = document.querySelector('meta[name="api-base"]');
-      const apiBase = apiBaseMeta?.content ?? '/api';
+      const apiBaseOverride = new URLSearchParams(window.location.search).get('apiBase')
+        || window.localStorage.getItem('bookly.apiBase');
+      const apiBase = (apiBaseOverride || apiBaseMeta?.content || '').replace(/\/+$/, '');
 
       function pad(n) { return String(n).padStart(2, '0'); }
       function formatMonthFromDate(d) { return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}`; }

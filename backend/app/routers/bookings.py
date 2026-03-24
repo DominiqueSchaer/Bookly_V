@@ -13,7 +13,7 @@ from sqlalchemy.orm import joinedload
 from .. import models, schemas
 from ..database import get_db
 
-router = APIRouter(prefix="/api", tags=["bookings"])
+router = APIRouter(tags=["bookings"])
 
 DEFAULT_RESOURCE_ID = "alder-lake-house"
 DEFAULT_RESOURCE_NAME = "alder-lake-house"
